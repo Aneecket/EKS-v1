@@ -1,0 +1,8 @@
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+
+
+Ans:
+
+#kubectl --kubeconfig .kube/config  get nodes
+
+aws eks update-kubeconfig --name eksdemo1 --region us-east-1
