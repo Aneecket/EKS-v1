@@ -1,0 +1,10 @@
+kubectl run my-first-pod --image stacksimplify/kubenginx:1.0.0
+
+# To get list of pod names
+kubectl get pods
+
+
+kubectl describe pod my-first-pod 
+
+
+kubectl delete pod my-first-pod
