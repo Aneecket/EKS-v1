@@ -1,0 +1,48 @@
+02-deployment-definition.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp3-deployment
+spec:
+  replicas: 3 # 3 Pods should exist at all times.
+  selector:  # Pods label should be defined in ReplicaSet label selector
+    matchLabels:
+      app: myapp3
+  template:
+    metadata:
+      name: myapp3-pod
+      labels:
+        app: myapp3 # Atleast 1 Pod label should match with ReplicaSet Label Selector
+    spec:
+      containers:
+      - name: myapp3
+        image: stacksimplify/kubenginx:3.0.0
+        ports:
+          - containerPort: 80
+          
+          
+ # Create ReplicaSet
+kubectl apply -f 02-deployment-definition.yml
+
+Create NodePort Service for Deployment
+
+03-deployment-nodeport-service.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: deployment-nodeport-service
+spec:
+  type: NodePort
+  selector:
+    app: myapp3
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 31232  
+      
+      
+ kubectl apply -f 03-deployment-nodeport-service.yml
+     
