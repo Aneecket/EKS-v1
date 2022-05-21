@@ -56,6 +56,10 @@ eksctl create nodegroup --cluster=eksdemo1 \
                         --alb-ingress-access \
                         --node-private-networking                       
                        
+  #delete
+  
+  eksctl delete nodegroup eksdemo1-ng-public1 --cluster eksdemo1
+
 # List EKS clusters
 eksctl get cluster
 
