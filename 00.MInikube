@@ -1,0 +1,3 @@
+minikube config set driver docker
+
+minikube start --driver=docker
