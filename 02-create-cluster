@@ -59,6 +59,8 @@ eksctl create nodegroup --cluster=eksdemo1 \
   #delete
   
   eksctl delete nodegroup eksdemo1-ng-public1 --cluster eksdemo1
+   eksctl delete nodegroup eksdemo1-ng-private1 --cluster eksdemo1 --region us-east-1
+    eksctl delete  cluster eksdemo1 --region us-east-1
 
 # List EKS clusters
 eksctl get cluster
