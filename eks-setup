@@ -1,0 +1,63 @@
+ ###update kube config to use prod cluster:
+ aws eks update-kubeconfig --name prod-eks-insr --region ap-south-1
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.1/deploy/static/provider/baremetal/deploy.yaml
+
+
+kubectl -n kube-system get cm aws-auth -o yaml >> auth.yml
+
+### Add role
+apiVersion: v1
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::845742683201:role/prod-eks-nodes-v1-eks-node-group-20221109071422451100000001
+      username: system:node:{{EC2PrivateDNSName}}
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::845742683201:role/Jenkins-role
+      username: jenkins
+
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2022-11-10T09:05:16Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "894999"
+  uid: 3c941bca-2f48-4ac0-b5be-86f70f919fe8
+
+
+
+
+helm repo add insr-local          	s3://helm.insr.local
+
+
+
+##Error: Error: could not find protocol handler for: s3
+# https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/set-up-a-helm-v3-chart-repository-in-amazon-s3.html
+
+sol: helm plugin install https://github.com/hypnoglow/helm-s3.git
+     helm s3 init s3://helm.insr.local
+     helm repo add insr-local          	s3://helm.insr.local
+
+
+
+helm plugin list
+
+
+
+kubectl top po -A --sort-by=cpu
+
+
+
+
+
+
+
+
+
+                      
