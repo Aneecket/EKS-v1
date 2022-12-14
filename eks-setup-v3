@@ -1,0 +1,329 @@
+1.) AWS CLI 
+2.) curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+3.) install kubectl
+
+curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.22.6/2022-03-09/bin/linux/amd64/kubectl
+chmod 755 kubectl 
+mv kubectl /usr/bin/kubectl
+kubectl version
+
+
+4.) set kubectl context 
+
+aws eks update-kubeconfig --name <123> --region <region-id>
+
+
+
+5.) deploy metrics server
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+
+6.) installing helm Helm
+
+curl -L https://git.io/get_helm.sh | bash -s -- --version v3.8.2
+
+
+7.) prometheus installation
+
+kubectl create namespace prometheus
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm upgrade -i prometheus prometheus-community/prometheus \
+    --set alertmanager.persistentVolume.storageClass="gp2",server.persistentVolume.storageClass="gp2"
+
+
+8.) ingress-controller
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.1/deploy/static/provider/baremetal/deploy.yaml
+
+
+
+9
+
+kubectl get cm stage-pos-partner-portal-database-configmap -o yaml
+kubectl apply -f pos3.yaml
+ kubectl port-forward svc/stage-redis-srv 6379:6379  --address='0.0.0.0'
+
+
+
+#export KUBECONFIG=prod-config 
+
+
+
+### 
+kubectl -n ingress-nginx exec -it ingress-nginx-controller-7b5d494f67-9kl72 -- nginx -T > nginx.conf
+
+
+
+
+## exec sheel
+
+kubectl exec -it prod-middleware-lead-api-srv-644d844d79-pbcll -- /bin/bash
+
+
+
+#### kubecost
+
+kubectl create namespace kubecost
+helm repo add kubecost https://kubecost.github.io/cost-analyzer/
+helm install kubecost kubecost/cost-analyzer --namespace kubecost --set kubecostToken="YW5lZWNldHZlcm1hQGdtYWlsLmNvbQ==xm343yadf98"
+
+
+kubectl port-forward --namespace kubecost deployment/kubecost-cost-analyzer 9090 file_copy
+
+
+ kubectl port-forward --namespace kubecost deployment/kubecost-cost-analyzer 9090:9090  --address='0.0.0.0'
+
+## https://www.kubecost.com/install#show-instructions
+
+
+
+# filbeat
+
+$ kubectl create namespace logging
+$ kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-service-account.yaml
+$ kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role.yaml
+$ kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role-binding.yaml
+
+
+# change rbac.authorization.k8s.io/v1beta1 to rbac.authorization.k8s.io/v1
+
+
+$ kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-configmap.yaml
+
+
+
+kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml
+
+
+
+
+Ref: https://docs.fluentbit.io/manual/v/1.0/installation/kubernetes
+
+
+
+
+Add efs 
+https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html
+
+
+
+Storage class.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: prod-efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0170e6add8e12f2ab
+  directoryPerms: "700"
+  gidRangeStart: "1000" # optional
+  gidRangeEnd: "2000" # optional
+  basePath: "/dynamic_provisioning" # optional
+
+
+Create pvc and pv
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-prod-sonar-data-pvc
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prod-efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-0170e6add8e12f2ab
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-prod-sonar-data-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: prod-efs-sc
+  resources:
+    requests:
+      storage: 06Gi
+
+
+
+
+
+EFS:
+kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/dev/?ref=master"
+
+
+DELETE EFS dS
+kubectl delete ds efs-csi-node -n kube-system
+
+EFS troublehssot
+https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/123
+
+Error:
+  Warning  ProvisioningFailed    6s (x4 over 13s)   efs.csi.aws.com_efs-csi-controller-786bfd459d-dbrwx_19d92e94-df2e-42df-bc47-a7c54acd435f  failed to provision volume with StorageClass "prod-efs-sc": rpc error: code = Unauthenticated desc = Access Denied. Please ensure you have the right AWS permissions: Access denied
+
+
+#check if IAm oidc provider is attached with suystem
+
+oidc_id=$(aws eks describe-cluster --name prod-eks-insr --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
+
+aws iam list-open-id-connect-providers | grep $oidc_id
+
+
+### Annotation 
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::845742683201:role/AmazonEKS_EFS_CSI_DriverRole
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"ServiceAccount","metadata":{"annotations":{"eks.amazonaws.com/role-arn":"arn:aws:iam::845742683201:role/AmazonEKS_EFS_CSI_DriverRole"},"labels":{"app.kubernetes.io/name":"aws-efs-csi-driver"},"name":"efs-csi-controller-sa","namespace":"kube-system"}}
+  creationTimestamp: "2022-12-08T08:09:02Z"
+  labels:
+    app.kubernetes.io/name: aws-efs-csi-driver
+  name: efs-csi-controller-sa
+  namespace: kube-system
+  resourceVersion: "9338905"
+  uid: 9f62c28e-e417-4e14-beb7-7fbd1bbcf46c
+secrets:
+- name: efs-csi-controller-sa-token-rbcrz
+
+
+
+
+
+
+EFS.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: efs-prod-sonar-data-pvc
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prod-efs-sc
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-0170e6add8e12f2ab
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: efs-prod-sonar-data-claim
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: prod-efs-sc
+  resources:
+    requests:
+      storage: 06Gi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### sonar pv
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sonar-data-pv
+spec:
+  accessModes:
+  - ReadWriteOnce
+  awsElasticBlockStore:
+    fsType: ext4
+    volumeID: aws://ap-south-1a/vol-0b4b099f16a485dd8
+  capacity:
+    storage: 10Gi
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prod-sc
+  volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sonar-extensions-pv
+spec:
+  accessModes:
+  - ReadWriteOnce
+  awsElasticBlockStore:
+    fsType: ext4
+    volumeID: aws://ap-south-1a/vol-0c68b6cfc75f575c6
+  capacity:
+    storage: 10Gi
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: prod-sc
+  volumeMode: Filesystem
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: sonar-data
+  name: sonar-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: prod-sc
+  volumeMode: Filesystem
+  volumeName: sonar-data-pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: sonar-extensions
+  name: sonar-extensions
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: prod-sc
+  volumeMode: Filesystem
+  volumeName: sonar-extensions-pv
+
+
+
+###
+
+
+
+
