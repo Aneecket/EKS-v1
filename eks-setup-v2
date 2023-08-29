@@ -6,6 +6,10 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.1/deploy/static/provider/baremetal/deploy.yaml
 
 
+## error: in ingress
+
+kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+
 kubectl -n kube-system get cm aws-auth -o yaml >> auth.yml
 
 ### Add role
