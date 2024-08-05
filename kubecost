@@ -11,3 +11,6 @@ kubectl port-forward --namespace kubecost deployment/kubecost-cost-analyzer 9090
  kubectl port-forward --namespace kubecost deployment/kubecost-cost-analyzer 9090:9090  --address='0.0.0.0'
 
 ## https://www.kubecost.com/install#show-instructions
+
+### working v1#
+ helm upgrade -i kubecost oci://public.ecr.aws/kubecost/cost-analyzer --version 2.0.2 --namespace kubecost --create-namespace -f values.yaml
