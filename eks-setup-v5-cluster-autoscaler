@@ -1,3 +1,6 @@
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
