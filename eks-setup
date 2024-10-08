@@ -30,7 +30,19 @@ metadata:
   resourceVersion: "894999"
   uid: 3c941bca-2f48-4ac0-b5be-86f70f919fe8
 
-
+## install helm
+    curl -o helm-v3.10.3-linux-amd64.tar.gz https://get.helm.sh/helm-v3.10.3-linux-amd64.tar.gz
+    chmod 777 helm-v3.10.3-linux-amd64.tar.gz
+    tar -zxvf helm-v3.10.3-linux-amd64.tar.gz
+    mv linux-amd64/helm /usr/local/bin/helm
+    ll /usr/local/bin/helm
+    helm version --template='Version: {{.Version}}'
+    /usr/local/bin/helm  version --template='Version: {{.Version}}'
+    cd .kube/
+    ll
+    chmod 400 config 
+    /usr/local/bin/helm  version --template='Version: {{.Version}}'
+    cp -r /usr/local/bin/helm /usr/bin/
 
 
 helm repo add insr-local          	s3://helm.insr.local
