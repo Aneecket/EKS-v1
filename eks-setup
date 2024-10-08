@@ -44,6 +44,29 @@ metadata:
     /usr/local/bin/helm  version --template='Version: {{.Version}}'
     cp -r /usr/local/bin/helm /usr/bin/
 
+policy for jenkins role:
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+            ],
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::helm.mahindrastage.local",
+                "arn:aws:s3:::helm.mahindrastage.local/*"
+            ]
+        }
+    ]
+}
+
 
 helm repo add insr-local          	s3://helm.insr.local
 
