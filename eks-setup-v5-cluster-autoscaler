@@ -1,4 +1,19 @@
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
+kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
+kubectl -n kube-system edit deployment.apps/cluster-autoscaler
+
+spec:
+      containers:
+      - command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/<YOUR CLUSTER NAME>
+        - --balance-similar-node-groups
+        - --skip-nodes-with-system-pods=false
 
 
 worker node policy
@@ -69,7 +84,7 @@ spec:
         - --balance-similar-node-groups
         - --skip-nodes-with-system-pods=false
         - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/stage-eks-insr
-        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.22.2
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2
         imagePullPolicy: Always
         name: cluster-autoscaler
         resources:
