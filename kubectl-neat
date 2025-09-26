@@ -1,0 +1,11 @@
+Install
+
+curl -sL https://github.com/itaysk/kubectl-neat/releases/latest/download/kubectl-neat_linux_amd64 \
+  -o /usr/bin/kubectl-neat
+chmod +x /usr/bin/kubectl-neat
+
+Export: 
+kubectl get deploy,svc,hpa,cm -n old-ns -o yaml | kubectl neat > exported.yaml
+sed -i 's/namespace: old-ns/namespace: new-ns/g' exported.yaml
+
+kubectl apply -f exported.yaml
