@@ -1,0 +1,66 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: prom-efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-0b3edf47b39763f97
+  basePath: "/eks"
+  directoryPerms: "750"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+mountOptions:
+  - tls
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+
+
+
+
+[root@ip-172-50-4-178 prom (⎈|ins-gibpl-stage)]# cat values-prom-efs.yaml 
+alertmanager:
+  enabled: false
+prometheus:
+  service:
+    type: ClusterIP
+  prometheusSpec:
+    replicas: 1 
+    retention: 15d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: efs-sc
+          accessModes: ["ReadWriteMany"]
+          resources:
+            requests:
+              storage: 20Gi
+grafana:
+  enabled: false
+  adminUser: admin
+  adminPassword: "ChangeMe123!"
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    storageClassName: prom-efs-sc
+    accessModes: ["ReadWriteMany"]
+    size: 5Gi
+kubeStateMetrics:
+  enabled: true
+nodeExporter:
+  enabled: true
+prometheusOperator:
+  admissionWebhooks:
+    patch:
+      enabled: true
+
+
+
+
+helm upgrade --install kube-prometheus-stack   prometheus-community/kube-prometheus-stack   -n monitoring   -f values-prom-efs.yaml
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack   -n monitoring   --reuse-values   --set prometheus.prometheusSpec.retention=15d   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.accessModes='{ReadWriteMany}'   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=50Gi   --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName=prom-efs-sc      
